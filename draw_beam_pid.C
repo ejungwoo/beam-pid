@@ -711,6 +711,7 @@ void MakeSummary()
     //    summaryName1 = summaryName1(2,summaryName1.Sizeof());
     //summaryName1.ReplaceAll("/","_");
     //summaryName1 = TString("summary/summary_") + summaryName1;
+    gSystem -> Exec("mkdir -p summary/");
     TString summaryName2 = Form("summary/run_%04d.txt",fCurrentRunNumber);;
     e_info << "Summary files " << endl;
     for (TString summaryName : {summaryName2}) cout << "   " << summaryName << endl;
@@ -764,6 +765,7 @@ void MakeSummary()
 
     auto cvsPID = fGroupPID -> GetCanvas();
     auto cvsFit = fGroupFit -> GetCanvas();
+    if (cvsPID!=nullptr||cvsFit!=nullptr) gSystem -> Exec("mkdir -p figures/");
     if (cvsPID!=nullptr) cvsPID -> SaveAs(Form("figures/pid_%04d.png",fCurrentRunNumber));
     if (cvsFit!=nullptr) cvsFit -> SaveAs(Form("figures/fit_%04d.png",fCurrentRunNumber));
 
