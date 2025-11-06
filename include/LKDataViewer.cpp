@@ -253,11 +253,11 @@ int LKDataViewer::AddGroupTab(LKDrawingGroup* group, int iTab, int iSub)
         tabSpace = fTabSpace;
         iTab = fTabGroup.size();
         fTabGroup.push_back(group);
-        fTabShouldBeUpdated.push_back(true);
+        fTabShouldBeUpdated.push_back(1);
 
         vector<LKDrawingGroup*> subTabGroup;
         fSubTabGroup.push_back(subTabGroup);
-        vector<bool> subTabShouldBeUpdated;
+        vector<int> subTabShouldBeUpdated;
         fSubTabShouldBeUpdated.push_back(subTabShouldBeUpdated);
     }
     else {
@@ -820,7 +820,7 @@ void LKDataViewer::ProcessGotoTopTab(int iTab, int iSub, bool layout, int signal
     fCurrentGroup = fTabGroup[updateID];
     fCurrentCanvas = fTabGroup[updateID] -> GetCanvas();
     if (fNumSubTabs[updateID]==0&&fTabShouldBeUpdated[updateID]) {
-        fTabShouldBeUpdated[updateID] = false;
+        fTabShouldBeUpdated[updateID] = 0;
         fCurrentGroup -> Draw(fDrawOption);
         fCurrentCanvas -> Modified();
         fCurrentCanvas -> Update();
@@ -1035,7 +1035,7 @@ void LKDataViewer::ProcessReLoadACanvas()
                 fSubTabShouldBeUpdated[iTab][iSub] = true;
         }
         else
-            fTabShouldBeUpdated[iTab] = true;
+            fTabShouldBeUpdated[iTab] = 1;
     }
     ProcessLoadAllCanvas();
 }
@@ -1062,7 +1062,7 @@ void LKDataViewer::ProcessLoadAllCanvas()
         }
         else  {
             if (fTabShouldBeUpdated[iTab]) {
-                fTabShouldBeUpdated[iTab] = false;
+                fTabShouldBeUpdated[iTab] = 0;
                 fTabGroup[iTab] -> Draw(fDrawOption);
                 fTabGroup[iTab] -> GetCanvas() -> Modified();
                 fTabGroup[iTab] -> GetCanvas() -> Update();

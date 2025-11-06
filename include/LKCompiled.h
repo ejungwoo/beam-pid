@@ -21,17 +21,22 @@ static const char* const LILAK_PROJECT_VERSIONS[] = {};
 #define LILAK_PROJECT_NAME(i)    (LILAK_PROJECT_NAMES[(i)])
 #define LILAK_PROJECT_VERSION(i) (LILAK_PROJECT_VERSIONS[(i)])
 
+#if !defined(BEAMPID_COMPILED) && !defined(LILAK_COMPILED) && !defined(__ROOTCLING__) && !defined(__CLING__)
 #include "LKCut.cpp"
 #include "LKMisc.cpp"
 #include "LKLogger.cpp"
 #include "LKDrawing.cpp"
 #include "LKPainter.cpp"
 #include "LKBinning.cpp"
-#include "LKBinning1.cpp"
 #include "LKVector3.cpp"
+#include "LKBeamPID.cpp"
+#include "LKBinning1.cpp"
 #include "LKParameter.cpp"
 #include "LKDataViewer.cpp"
 #include "LKDrawingGroup.cpp"
+#include "LKBeamPIDControl.cpp"
 #include "LKParameterContainer.cpp"
+#endif
 
 #endif
+

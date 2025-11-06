@@ -239,9 +239,9 @@ class LKDataViewer : public TGMainFrame
         TGTab *fCurrentSubTabSpace = nullptr;
         TGListBox* fTabListBox = nullptr;
         LKDrawingGroup *fTopDrawingGroup = nullptr;
-        vector<bool> fTabShouldBeUpdated;
+        vector<int> fTabShouldBeUpdated;
         vector<LKDrawingGroup*> fTabGroup;
-        vector<vector<bool>> fSubTabShouldBeUpdated;
+        vector<vector<int>> fSubTabShouldBeUpdated;
         vector<vector<LKDrawingGroup*>> fSubTabGroup;
         vector<TGTab*> fSubTabSpace;
         vector<int> fNumSubTabs;

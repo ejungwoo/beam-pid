@@ -26,7 +26,7 @@ void LKCut::Draw(double x1, double x2, double y1, double y2)
     if (numCuts==0)
         return;
 
-    for (auto active : {false, true})
+    for (auto active : {0, 1})
     {
         for (auto i=0; i<numCuts; ++i)
         {
@@ -166,7 +166,7 @@ void LKCut::Add(TString tag, TCut* cut, bool apply)
 {
     if (tag.IsNull()) tag = MakeTag();
     fCutArray -> Add(cut);
-    fActiveArray.push_back(apply);
+    fActiveArray.push_back(int(apply));
     fTagArray.push_back(tag);
     fTypeArray.push_back(kTypeTCut);
 }
@@ -175,7 +175,7 @@ void LKCut::Add(TString tag, TCutG* cut, bool apply)
 {
     if (tag.IsNull()) tag = MakeTag();
     fCutArray -> Add(cut);
-    fActiveArray.push_back(apply);
+    fActiveArray.push_back(int(apply));
     fTagArray.push_back(tag);
     fTypeArray.push_back(kTypeCutG);
 }
@@ -229,7 +229,7 @@ int LKCut::IsInsideOr(Double_t x, Double_t y) const
 {
     auto numCuts = GetNumCuts();
     for (auto i=0; i<numCuts; ++i) {
-        if (fActiveArray[i]==false)
+        if (fActiveArray[i]==0)
             continue;
         int inside = IsInsideSingle(i,x,y);
         if (inside>0)
@@ -242,7 +242,7 @@ int LKCut::IsInsideAnd(Double_t x, Double_t y) const
 {
     auto numCuts = GetNumCuts();
     for (auto i=0; i<numCuts; ++i) {
-        if (fActiveArray[i]==false)
+        if (fActiveArray[i]==0)
             continue;
         int inside = IsInsideSingle(i,x,y);
         if (inside==0)
@@ -304,7 +304,7 @@ TString LKCut::MakeCutStringDelim(TString varX, TString varY, TString delim)
     TString cutString;
     auto numCuts = GetNumCuts();
     for (auto i=0; i<numCuts; ++i) {
-        if (fActiveArray[i]==false)
+        if (fActiveArray[i]==0)
             continue;
         auto value = GetCutString(i,varX,varY);
         value = Form("(%s)",value.Data());

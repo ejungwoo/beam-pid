@@ -55,7 +55,7 @@ class LKCut : public TNamed
 
         TObjArray* GetCutArray() { return fCutArray; }
         vector<int> *GetTypeArray() { return &fTypeArray; }
-        vector<bool> *GetActiveArray() { return &fActiveArray; }
+        vector<int> *GetActiveArray() { return &fActiveArray; }
 
         int GetNumCuts() const { return fCutArray->GetEntries(); }
         TString GetExpression() const { return fExpression; }
@@ -64,7 +64,7 @@ class LKCut : public TNamed
         TObjArray* fCutArray = nullptr;
         vector<TString> fTagArray;
         vector<int> fTypeArray;
-        vector<bool> fActiveArray;
+        vector<int> fActiveArray;
         TString fExpression;
 
     private:
