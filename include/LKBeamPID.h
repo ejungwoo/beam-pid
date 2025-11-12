@@ -30,12 +30,16 @@ class LKBeamPID
 {
     public:
         LKBeamPID();
+        LKBeamPID(TVirtualPad *pad): LKBeamPID() { UsePad(pad); }
 
         bool ListFiles(TString path="./", TString format="gen.root");
         bool SelectFile(int idx=-1);
         void CreateAndFillHistogram(int printb=1);
-        void DrawPoints(vector<vector<double>> points=vector<vector<double>>{});
-        void DrawPoints(int redraw=0, vector<vector<double>> points=vector<vector<double>>{});
+        void UseCurrentgPad() { UsePad(gPad); }
+        void UsePad(TVirtualPad *pad);
+        void SelectCenters(vector<vector<double>> points=vector<vector<double>>{});
+        void Redraw();
+        void ReselectCenters();
         void FitTotal();
         void MakeSummary();
 
@@ -48,9 +52,8 @@ class LKBeamPID
         double Integral2DGaussian(TF2 *f2, double contoA=0);
         void CollectRootFiles(std::vector<TString> &listGenFile, const char *dataPath="data", const TString &format="gen.root");
 
-        void PrintBinning();
-
         void Help(TString mode="help");
+        void PrintBinning();
         void ResetBinning();
         void SaveBinning();
         void SetSValue(double scale=-1);
@@ -72,10 +75,9 @@ class LKBeamPID
     private:
         int fStage = 0;
         bool fUse2D = true;
-        bool fUse3D = false;
         bool fUseLogz = false;
         LKDrawingGroup *fTop = nullptr, *fGroupFit = nullptr, *fGroupPID = nullptr;
-        LKDrawing *fDraw2D = nullptr, *fDraw3D = nullptr;
+        LKDrawing *fDraw2D = nullptr;
         TObjArray *fHistDataArray = nullptr, *fHistFitGArray = nullptr, *fHistBackArray = nullptr, *fHistTestArray = nullptr, *fHistErrrArray = nullptr;
         TObjArray* fFitArray = nullptr;
         TObjArray* fContourGraphArray = nullptr;
@@ -84,7 +86,7 @@ class LKBeamPID
         TTree* fDataTree = nullptr;
         TH2D *fHistPID = nullptr;
         bool fRunCollected = false, fInitialized = false;
-        int fCurrentRunNumber=999999999, fCurrentType;
+        int fCurrentRunNumber=999999999, fCurrentType = 1;
         double fSigDist = 1;
         int fNumContours = 10;
         LKBinning fBnn2, fBnn3;
@@ -93,27 +95,10 @@ class LKBeamPID
         TGraph* fFinalContourGraph = nullptr;
         vector<double> fContourScaleList = {0.9,0.5};
         const TString fFormulaRotated2DGaussian = "[0]*exp(-0.5*(pow(((x-[1])*cos([5])+(y-[3])*sin([5]))/[2],2)+pow((-(x-[1])*sin([5])+(y-[3])*cos([5]))/[4],2)))";
+        TString fXName, fYName;
 
     ClassDef(LKBeamPID, 1)
 };
-
-//#define c1 Help();
-//#define c2 PrintBinning();
-//#define c3 ResetBinning();
-//#define c4 SaveBinning();
-//#define c5 SetXBinSize();
-//#define c6 SetYBinSize();
-//#define c7 SetSValue();
-//#define c8 SetGausFitRange();
-//#define c9 SaveConfiguration();
-//
-//#define a1 ListFiles();
-//#define a2 SelectFile();
-//#define a3 ClickSelectPoints();
-//#define a4 FitTotal();
-//#define a5 MakeSummary();
-//#define b1 RedrawPlot();
-//#define b2 RedrawAndSelectPoints();
 
 #define e_title std::cout << "\033[0;35m" << "[RUN-" << fCurrentRunNumber << "] ============= "  << "\033[0m"
 

@@ -18,16 +18,37 @@ LKBeamPID::LKBeamPID()
     fGroupFit = fTop -> CreateGroup(Form("event_fit_%04d",fCurrentRunNumber));
     fGroupPID = fTop -> CreateGroup(Form("event_pid_%04d",fCurrentRunNumber));
     fDraw2D = fGroupPID -> CreateDrawing(Form("draw_2d_%04d",fCurrentRunNumber));
-    fDraw3D = fGroupPID -> CreateDrawing(Form("draw_3d_%04d",fCurrentRunNumber),fUse3D);
-    fGroupPID -> SetCanvasSize(1+int(fUse3D),1,1);
+    fDraw2D -> SetCanvasSize(1,1,1);
     fDraw2D -> SetCanvasMargin(.11,.15,.11,0.08);
-    fDraw3D -> SetCanvasMargin(.10,.10,.10,.10);
     if (fUseLogz) fDraw2D -> SetLogz();
 }
 
 void LKBeamPID::Help(TString mode)
 {
-    PrintBinning();
+    if (mode.Index("help")>=0) {
+        PrintBinning();
+        e_cout << "== List of main functions" << endl;
+        e_cout << "   - ListFiles(TString path, TString format)" << endl;
+        e_cout << "   - SelectFile(int idx)" << endl;
+        e_cout << "   - UseCurrentgPad()" << endl;
+        e_cout << "   - SelectCenters()" << endl;
+        e_cout << "   - Redraw()" << endl;
+        e_cout << "   - RelectCenters()" << endl;
+        e_cout << "   - FitTotal()" << endl;
+        e_cout << "   - MakeSummary()" << endl;
+        e_cout << endl;
+        e_cout << "== List of optional functions" << endl;
+        e_cout << "   - Help(TString mode)" << endl;
+        e_cout << "   - ResetBinning()" << endl;
+        e_cout << "   - SaveBinning()" << endl;
+        e_cout << "   - SetSValue(double scale)" << endl;
+        e_cout << "   - SetXBinSize(double w)" << endl;
+        e_cout << "   - SetYBinSize(double w)" << endl;
+        e_cout << "   - SetGausFitRange(double sigDist)" << endl;
+        e_cout << "   - SetRunNumber(int run)" << endl;
+        e_cout << "   - SaveConfiguration()" << endl;
+    }
+
     //if (mode.Index("i")>=0) {
     //    e_note << "List of binning methods:" << endl;
     //      e_cout << "   SetRangeX(x1, x2)" << endl;
@@ -118,8 +139,9 @@ bool LKBeamPID::SelectFile(int index)
     if (fDataFile) fDataFile -> Close();
     fDataFile = new TFile(fCurrentFileName,"read");
     fDataTree = (TTree*) fDataFile -> Get("tree");
-    if      (fCurrentFileName.Index("chkf2run")>=0) { fCurrentType = 2; }
-    else if (fCurrentFileName.Index("chkf3run")>=0) { fCurrentType = 3; }
+    if      (fCurrentFileName.Index("chkf2run")>=0) { fCurrentType = 2; fYName = "f2ssde"; }
+    else if (fCurrentFileName.Index("chkf3run")>=0) { fCurrentType = 3; fYName = "f3ssde"; }
+    fXName = "rf0";
 
     if (!fInitialized)
     {
@@ -131,9 +153,7 @@ bool LKBeamPID::SelectFile(int index)
     fGroupFit -> SetName(Form("event_fit_%04d",fCurrentRunNumber));
     fGroupPID -> SetName(Form("event_pid_%04d",fCurrentRunNumber));
     fDraw2D -> SetName(Form("draw_2d_%04d",fCurrentRunNumber));
-    fDraw3D -> SetName(Form("draw_3d_%04d",fCurrentRunNumber));
-
-    fGroupPID -> Draw();
+    fDraw2D -> Draw();
     e_cout << endl;
     Help("td");
 
@@ -147,48 +167,61 @@ void LKBeamPID::CreateAndFillHistogram(int printb)
         e_cout << "   " << fBnn3.Print(false) << endl;
     }
     if (fDataTree) {
-        Long64_t entriesTotal;
-        //if (fCurrentType==2) fHistPID = fBnn2.NewH2(Form("histPID_%04d",fCurrentRunNumber),"f2ssde:rf0");
-        //if (fCurrentType==3) fHistPID = fBnn3.NewH2(Form("histPID_%04d",fCurrentRunNumber),"f3ssde:rf0");
-        if (fCurrentType==2) fHistPID = fBnn2.NewH2(Form("histPID_%04d",fCurrentRunNumber),";rf0;f2ssde");
-        if (fCurrentType==3) fHistPID = fBnn3.NewH2(Form("histPID_%04d",fCurrentRunNumber),";rf0;f3ssde");
-        if (fCurrentType==2) entriesTotal = fDataTree->Draw(Form("f2ssde:rf0>>%s",fHistPID->GetName()),"","goff");
-        if (fCurrentType==3) entriesTotal = fDataTree->Draw(Form("f3ssde:rf0>>%s",fHistPID->GetName()),"","goff");
+        fHistPID = fBnn2.NewH2(Form("histPID_%04d",fCurrentRunNumber),Form(";%s;%s",fXName.Data(),fYName.Data()));
+        Long64_t entriesTotal = fDataTree->Draw(Form("%s:%s>>%s",fYName.Data(),fXName.Data(),fHistPID->GetName()),"","goff");
         e_info << "Total entries =" << entriesTotal << " (hist)=" << fHistPID -> GetEntries() << endl;
         fHistPID -> GetXaxis() -> SetTitleOffset(1.2);
         fHistPID -> SetTitle(Form("RUN %04d",fCurrentRunNumber));
         fDraw2D -> Clear();
         fDraw2D -> Add(fHistPID, "colz");
         fDraw2D -> SetStatsFillStyle(3001);
-        fDraw3D -> Clear();
-        fDraw3D -> Add(fHistPID, "lego2");
+        fDraw2D -> Print(); // XXX
         fStage = 3;
     }
 }
 
-void LKBeamPID::DrawPoints(vector<vector<double>> points)
+void LKBeamPID::UsePad(TVirtualPad *pad)
 {
-    DrawPoints(0, points);
+    fDraw2D -> Clear();
+    fDraw2D -> Add(gPad);
+    fDraw2D -> Clear("!main:!cvs");
+    fHistPID = (TH2D*) fDraw2D -> GetMainHist();
+    fXName = fHistPID -> GetXaxis() -> GetTitle();
+    fYName = fHistPID -> GetYaxis() -> GetTitle();
+    fCurrentType = 1;
+    fStage = 4;
+    fDraw2D -> Draw();
+    return;
 }
 
-void LKBeamPID::DrawPoints(int redraw, vector<vector<double>> points)
+void LKBeamPID::ReselectCenters()
 {
-    e_title << "DrawPoints" << endl;
     if (fStage<2) {
         e_warning << "Must select file before drawing points!" << endl;
         return;
     }
+    fDraw2D -> Clear("!main:!cvs");
+    fDraw2D -> Draw();
+    SelectCenters();
+}
 
-    if (redraw==2) {
-        fDraw2D -> Clear("!main");
-        fGroupPID -> Draw();
-        Help("tr");
+void LKBeamPID::Redraw()
+{
+    if (fStage<2) {
+        e_warning << "Must select file before drawing points!" << endl;
         return;
     }
+    fDraw2D -> Clear("!main:!cvs");
+    fDraw2D -> Draw();
+    Help("tr");
+}
 
-    if (redraw==1) {
-        fDraw2D -> Clear("!main");
-        fGroupPID -> Draw();
+void LKBeamPID::SelectCenters(vector<vector<double>> points)
+{
+    e_title << "SelectCenters" << endl;
+    if (fStage<2) {
+        e_warning << "Must select file before drawing points!" << endl;
+        return;
     }
 
     if (points.size()==0)
@@ -214,17 +247,21 @@ void LKBeamPID::DrawPoints(int redraw, vector<vector<double>> points)
     double wy = fHistPID -> GetYaxis() -> GetBinWidth(1);
     double binA = wx*wy;
 
+    e_info << "Total " << points.size() << " pid centers are selected" << endl;
+
     int count = 0;
     fFitArray -> Clear();
     for (auto point : points)
     {
         auto fit = Fit2DGaussian(fHistPID, count, point[0], point[1]);
+        auto idx = fFitArray -> GetEntries();
         fFitArray -> Add(fit);
         if (fUse2D) {
             double xx1, xx2, yy1, yy2;
             fit -> GetParLimits(1,xx1,xx2);
             fit -> GetParLimits(3,yy1,yy2);
             auto graphCenterRange = new TGraph();
+            graphCenterRange -> SetName("graphCenterRange");
             graphCenterRange -> SetLineColor(kGreen);
             graphCenterRange -> SetLineStyle(9);
             graphCenterRange -> SetPoint(0,xx1,yy1);
@@ -234,6 +271,7 @@ void LKBeamPID::DrawPoints(int redraw, vector<vector<double>> points)
             graphCenterRange -> SetPoint(4,xx1,yy1);
             fit -> GetRange(xx1,yy1,xx2,yy2);
             auto graphFitRange = new TGraph();
+            graphFitRange -> SetName("graphFitRange");
             graphFitRange -> SetLineColor(kYellow);
             graphFitRange -> SetLineStyle(9);
             graphFitRange -> SetPoint(0,xx1,yy1);
@@ -255,22 +293,26 @@ void LKBeamPID::DrawPoints(int redraw, vector<vector<double>> points)
             auto thetaR = fit->GetParameter(5);
             for (double contourScale : fContourScaleList) {
                 auto graphC = GetContourGraph(contourScale*amplit, amplit, valueX, sigmaX, valueY, sigmaY, thetaR);
+                graphC -> SetName(Form("graphC_%d_S%s",idx,LKMisc::RemoveTrailing0(100*contourScale,1).Data()));
                 graphC -> SetLineColor(kRed);
                 graphC -> SetLineStyle(9);
                 fDraw2D -> Add(graphC,"samel");
             }
             auto graphC = GetContourGraph(fFinalContourAScale*amplit, amplit, valueX, sigmaX, valueY, sigmaY, thetaR);
+            graphC -> SetName(Form("graphC_%d_S%s",idx,LKMisc::RemoveTrailing0(100*fFinalContourAScale,1).Data()));
             graphC -> SetLineColor(kRed);
             fDraw2D -> Add(graphC,"samel");
         }
         count++;
     }
-    fGroupPID -> Draw();
+    //fDraw2D -> Print("all");
+    //fDraw2D -> Draw("debug_draw");
     fGroupFit -> Draw();
+    fDraw2D -> Draw();
 
     Help("rqf");
 
-    fStage = 4;
+    fStage = 5;
     return;
 }
 
@@ -281,12 +323,12 @@ void LKBeamPID::FitTotal()
         e_warning << "Must select file before fit total pid!" << endl;
         return;
     }
-    else if (fStage<4) {
+    else if (fStage<5) {
         e_warning << "Must select points before fit total pid!" << endl;
         return;
     }
 
-    fDraw2D -> Clear("!main");
+    fDraw2D -> Clear("!main:!cvs");
     fGroupFit -> Clear();
     auto numFits = fFitArray -> GetEntries();
     TString formulaTotal;
@@ -340,6 +382,7 @@ void LKBeamPID::FitTotal()
         fitTotal -> SetParLimits(4+iFit*6, sigmaY*0.8, sigmaY*1.2);
         fitTotal -> SetParLimits(5+iFit*6, thetaR-0.1*TMath::Pi(), thetaR+0.1*TMath::Pi());
     }
+    e_info << "Fitting " << numFits << " PIDs in " << Form("x=(%f,%f), y=(%f,%f) ...",xx1,xx2,yy1,yy2) << endl;
     fHistPID -> Fit(fitTotal,"QBR0");
     auto legend = new TLegend();
     legend -> SetFillStyle(3001);
@@ -410,10 +453,10 @@ void LKBeamPID::FitTotal()
     fDraw2D -> SetLegendCorner(1);
     fDraw2D -> Add(legend);
     fGroupFit -> Draw();
-    fGroupPID -> Draw();
+    fDraw2D -> Draw();
 
     Help("rqg");
-    fStage = 5;
+    fStage = 6;
 }
 
 void LKBeamPID::MakeSummary()
@@ -423,7 +466,7 @@ void LKBeamPID::MakeSummary()
         e_warning << "Must select file before creating summary!" << endl;
         return;
     }
-    else if (fStage<4) {
+    else if (fStage<5) {
         e_warning << "Must select points before creating summary!" << endl;
         return;
     }
@@ -434,9 +477,6 @@ void LKBeamPID::MakeSummary()
     for (TString summaryName : {summaryName1,summaryName2}) e_cout << "   " << summaryName << endl;
     for (TString summaryName : {summaryName2})
     {
-        TString yname;
-        if (fCurrentType==2) yname = "y_f2ssde";
-        if (fCurrentType==3) yname = "y_f3ssde";
         ofstream fileSummary(summaryName);
         auto numFits = fFitArray -> GetEntries();
         for (auto iFit=0; iFit<numFits; ++iFit)
@@ -465,7 +505,7 @@ void LKBeamPID::MakeSummary()
             fileSummary << setw(25) << Form("pid%d/purity",iFit)             << corrected/total << endl;
             fileSummary << setw(25) << Form("pid%d/amplitude",iFit)          << amplit << endl;
             fileSummary << setw(25) << Form("pid%d/x(x_rf0)",iFit)           << valueX << endl;
-            fileSummary << setw(25) << Form("pid%d/y(%s)",iFit,yname.Data()) << valueY << endl;
+            fileSummary << setw(25) << Form("pid%d/y(%s)",iFit,fYName.Data()) << valueY << endl;
             fileSummary << setw(25) << Form("pid%d/sigma_x",iFit)            << sigmaX << endl;
             fileSummary << setw(25) << Form("pid%d/sigma_y",iFit)            << sigmaY << endl;
             fileSummary << setw(25) << Form("pid%d/theta_deg",iFit)          << thetaR*TMath::RadToDeg() << endl;
@@ -480,23 +520,27 @@ void LKBeamPID::MakeSummary()
         }
     }
 
-    auto fileSummary1 = new TFile(summaryName1,"recreate");
+    {
+        auto fileSummary1 = new TFile(summaryName1,"recreate");
 
-    auto cvsPID = fGroupPID -> GetCanvas();
-    auto cvsFit = fGroupFit -> GetCanvas();
-    if (cvsPID!=nullptr||cvsFit!=nullptr) gSystem -> Exec("mkdir -p figures/");
-    if (cvsPID!=nullptr) {
-        cvsPID -> SaveAs(Form("figures/pid_%04d.png",fCurrentRunNumber));
-        fileSummary1 -> cd();
-        cvsPID -> Write("pid");
-    }
-    if (cvsFit!=nullptr) {
-        cvsFit -> SaveAs(Form("figures/fit_%04d.png",fCurrentRunNumber));
-        cvsFit -> Write("fit");
+        auto cvsPID = fDraw2D -> GetCanvas();
+        auto cvsFit = fGroupFit -> GetCanvas();
+        if (cvsPID!=nullptr||cvsFit!=nullptr) gSystem -> Exec("mkdir -p figures/");
+        if (cvsPID!=nullptr) {
+            cvsPID -> SaveAs(Form("figures/pid_%04d.png",fCurrentRunNumber));
+            fileSummary1 -> cd();
+            cvsPID -> Write("pid");
+        }
+        if (cvsFit!=nullptr) {
+            cvsFit -> SaveAs(Form("figures/fit_%04d.png",fCurrentRunNumber));
+            cvsFit -> Write("fit");
+        }
+
+        fTop -> Write("flat");
     }
 
     Help("ra");
-    fStage = 6;
+    fStage = 7;
 }
 
 LKDrawing* LKBeamPID::GetFitTestDrawing(int idx, TH2D *hist, TF2* fit, TF2* fitContanminent)
@@ -609,9 +653,7 @@ LKDrawing* LKBeamPID::GetFitTestDrawing(int idx, TH2D *hist, TF2* fit, TF2* fitC
 
 TF2* LKBeamPID::Fit2DGaussian(TH2D *hist, int idx, double valueX, double valueY, double sigmaX, double sigmaY, double theta)
 {
-    TF2 *fit = nullptr;
-    if (fCurrentType==2) fit = new TF2(Form("fit_%04d_%d", fCurrentRunNumber, idx), fFormulaRotated2DGaussian, valueX-fSigDist*sigmaX,valueX+fSigDist*sigmaX, valueY-fSigDist*sigmaY,valueY+fSigDist*sigmaY);
-    if (fCurrentType==3) fit = new TF2(Form("fit_%04d_%d", fCurrentRunNumber, idx), fFormulaRotated2DGaussian, valueX-fSigDist*sigmaX,valueX+fSigDist*sigmaX, valueY-fSigDist*sigmaY,valueY+fSigDist*sigmaY);
+    TF2 *fit = new TF2(Form("fit_%04d_%d", fCurrentRunNumber, idx), fFormulaRotated2DGaussian, valueX-fSigDist*sigmaX,valueX+fSigDist*sigmaX, valueY-fSigDist*sigmaY,valueY+fSigDist*sigmaY);
     double amplit = hist -> GetBinContent(hist->GetXaxis()->FindBin(valueX),hist->GetYaxis()->FindBin(valueY));
     fit -> SetParameter(0, amplit);
     fit -> SetParameter(1, valueX);
@@ -633,8 +675,6 @@ TF2* LKBeamPID::Fit2DGaussian(TH2D *hist, int idx, double valueX, double valueY,
         << setw(28) << Form("x=(%f, %f),", fit->GetParameter(1), fit->GetParameter(2))
         << setw(28) << Form("y=(%f, %f),", fit->GetParameter(3), fit->GetParameter(4))
         << setw(18) << Form("theta=%f,", fit->GetParameter(5)*TMath::RadToDeg())
-        << " (0)=" << fit -> Eval(fit->GetParameter(1)+0*fit->GetParameter(2),fit->GetParameter(3))
-        << " (3)=" << fit -> Eval(fit->GetParameter(1)+3*fit->GetParameter(2),fit->GetParameter(3))
         << endl;
     return fit;
 }

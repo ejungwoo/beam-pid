@@ -3,23 +3,14 @@
 ClassImp(LKBeamPIDControl)
         
 LKBeamPIDControl::LKBeamPIDControl(UInt_t w, UInt_t h)
-    : LKBeamPIDControl(new LKBeamPID, w, h)
+    : TGMainFrame(gClient->GetRoot(), w, h), fInputMode(InputMode::None), LKBeamPID()
 {
-}
-
-LKBeamPIDControl::LKBeamPIDControl(LKBeamPID *beamPID, UInt_t w, UInt_t h)
-    : TGMainFrame(gClient->GetRoot(), w, h), fInputMode(InputMode::None)
-{
-    fBeamPID = beamPID;
-
     SetCleanup(kDeepCleanup);
 
     auto *vMain = new TGVerticalFrame(this);
     AddFrame(vMain, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 8,8,8,8));
 
-    // ---------------------------
-    // 상단: 숫자 입력 + Enter 버튼
-    // ---------------------------
+    // Number + Enter
     auto *topFrame = new TGHorizontalFrame(vMain);
     vMain->AddFrame(topFrame, new TGLayoutHints(kLHintsExpandX, 0,0,10,10));
 
@@ -31,15 +22,13 @@ LKBeamPIDControl::LKBeamPIDControl(LKBeamPID *beamPID, UInt_t w, UInt_t h)
     fNumEntry->Resize(100, fNumEntry->GetDefaultHeight());
     topFrame->AddFrame(fNumEntry, new TGLayoutHints(kLHintsLeft | kLHintsCenterY));
 
-    fBtnEnter = new TGTextButton(topFrame, "Enter");
-    fBtnEnter->SetEnabled(kFALSE);
-    topFrame->AddFrame(fBtnEnter, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 6,0,0,0));
-    fBtnEnter->Connect("Clicked()", "LKBeamPIDControl", this, "OnEnter()");
-    fNumEntry->GetNumberEntry()->Connect("ReturnPressed()", "LKBeamPIDControl", this, "OnEnter()");
+    fButtonEnter = new TGTextButton(topFrame, "Enter");
+    fButtonEnter->SetEnabled(kFALSE);
+    topFrame->AddFrame(fButtonEnter, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 6,0,0,0));
+    fButtonEnter->Connect("Clicked()", "LKBeamPIDControl", this, "PressedEnter()");
+    fNumEntry->GetNumberEntry()->Connect("ReturnPressed()", "LKBeamPIDControl", this, "PressedEnter()");
 
-    // ---------------------------
-    // 버튼 영역: 2열 구성
-    // ---------------------------
+    // Buttons
     auto *hMain = new TGHorizontalFrame(vMain);
     vMain->AddFrame(hMain, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY));
 
@@ -50,39 +39,46 @@ LKBeamPIDControl::LKBeamPIDControl(LKBeamPID *beamPID, UInt_t w, UInt_t h)
 
     auto *btnLH = new TGLayoutHints(kLHintsExpandX, 0,0,3,3);
 
-    auto mkBtn = [&](TGVerticalFrame* parent, const char* label) {
+    fHLColor = TColor::RGB2Pixel(255, 255, 204); // RGB for fHLColor
+    fNmColor = gClient->GetResourcePool()->GetFrameBgndColor();
+
+    auto mkBtn = [&](TGVerticalFrame* parent, const char* label, TString connectFunctionName="") {
         auto* b = new TGTextButton(parent, label);
         b->SetTextJustify(kTextLeft); // ← 이 한 줄 추가!
         const TGFont *font = gClient->GetFont("-adobe-helvetica-bold-r-*-*-18-*-*-*-*-*-*-*");
         if (font) b->SetFont(font->GetFontStruct());
         parent->AddFrame(b, btnLH);
+        if (!connectFunctionName.IsNull()) b->Connect("Clicked()", "LKBeamPIDControl", this, connectFunctionName);
         return b;
     };
 
-    // 왼쪽 열
-    fBtnHelp             = mkBtn(col2, "c1  Help");
-    fBtnPrintBinning     = mkBtn(col2, "c2  Print binning");
-    fBtnResetBinning     = mkBtn(col2, "c3  Reset binning");
-    fBtnSaveBinning      = mkBtn(col2, "c4  Save binning");
-    fBtnSetBinningSize   = mkBtn(col2, "c5  Set x-bin width");
-    fBtnSetBinningSize   = mkBtn(col2, "c6  Set y-bin width");
-    fBtnSetSValue        = mkBtn(col2, "c7  Set S value");
-    fBtnSetFitRangeSigma = mkBtn(col2, "c8  Set fit range (sigma)");
-    fBtnSaveConfig       = mkBtn(col2, "c9  Save configuration");
+    // left
+    fButtonListFiles       = mkBtn(col1, "&List files",               "PressedListFiles()");
+    fButtonSelectFile      = mkBtn(col1, "&Select file",              "PressedSetFileNumber()");
+    fButtonUseCurrentgPad  = mkBtn(col1, "&Use drawing on gPad",      "PressedUseCurrentgPad()");
+    fButtonSelectCenters   = mkBtn(col1, "&Click select centers",     "PressedSelectCenters()");
+    fButtonRedrawPlot      = mkBtn(col1, "Redraw &plot",              "PressedRedraw()");
+    fButtonReselectCenters = mkBtn(col1, "&Redraw and select centers","PressedReselectCenters()");
+    fButtonFitTotal        = mkBtn(col1, "&Fit total",                "PressedFitTotal()");
+    fButtonMakeSummary     = mkBtn(col1, "&Make summary",             "PressedMakeSummary()");
+    fButtonHelp            = mkBtn(col2, "Help",                      "PressedHelp()");
+    fButtonPrintBinning    = mkBtn(col2, "Print binning",             "PressedPrintBinning()");
+    fButtonResetBinning    = mkBtn(col2, "Reset binning",             "PressedResetBinning()");
+    fButtonSaveBinning     = mkBtn(col2, "Save binning",              "PressedSaveBinning()");
+    fButtonSetBinWidthX    = mkBtn(col2, "Set x-bin width",           "PressedSetXBinSize()");
+    fButtonSetBinWidthY    = mkBtn(col2, "Set y-bin width",           "PressedSetYBinSize()");
+    fButtonSetSValue       = mkBtn(col2, "Set S value",               "PressedSetSValue()");
+    fButtonSetFitRange     = mkBtn(col2, "Set fit range (sigma)",     "PressedSetFitRange()");
+    fButtonSetRunNumber    = mkBtn(col2, "Set run number",            "PressedSetRunNumber()");
+    fButtonSaveConfig      = mkBtn(col2, "Save configuration",        "PressedSaveConfiguration()");
 
-    // 오른쪽 열
-    fBtnListFiles           = mkBtn(col1, "a1  List files");
-    fBtnSelectFile          = mkBtn(col1, "a2  Select file");
-    fBtnClickSelectPoints   = mkBtn(col1, "a3  Click select points");
-    fBtnFitTotal            = mkBtn(col1, "a4  Fit total");
-    fBtnMakeSummary         = mkBtn(col1, "a5  Make summary");
-    fBtnRedrawPlot          = mkBtn(col1, "b1  Redraw plot");
-    fBtnRedrawSelectPoints  = mkBtn(col1, "b2  Redraw & select points");
-
-    // 연결
-    fBtnSelectFile->Connect("Clicked()", "LKBeamPIDControl", this, "OnSelectFile()");
-    fBtnSetFitRangeSigma->Connect("Clicked()", "LKBeamPIDControl", this, "OnChangeSigmaDist()");
-    fBtnEnter->Connect("Clicked()", "LKBeamPIDControl", this, "OnEnter()");
+    // Bottom
+    //auto *botFrame = new TGHorizontalFrame(vMain);
+    //vMain->AddFrame(botFrame, new TGLayoutHints(kLHintsExpandX, 0,0,10,10));
+    //vMain->AddFrame(botFrame, new TGLayoutHints(kLHintsExpandX));
+    //auto buttonQuit = new TGTextButton(botFrame, "Quit");
+    //botFrame->AddFrame(fButtonEnter, new TGLayoutHints(kLHintsExpandX, 0,6,3,3));
+    //buttonQuit->Connect("Clicked()", "LKBeamPIDControl", this, "PressedQuit()");
 
     SetWindowName("Beam PID Control");
     MapSubwindows();
@@ -90,30 +86,117 @@ LKBeamPIDControl::LKBeamPIDControl(LKBeamPID *beamPID, UInt_t w, UInt_t h)
     MapWindow();
 }
 
-void LKBeamPIDControl::OnSelectFile() {
-    Info("Select file → 숫자 입력 대기");
-    RequireInput(InputMode::SelectFile);
+void LKBeamPIDControl::ResetBB() 
+{
+    fButtonListFiles       -> ChangeBackground(fNmColor);
+    fButtonSelectFile      -> ChangeBackground(fNmColor);
+    fButtonUseCurrentgPad  -> ChangeBackground(fNmColor);
+    fButtonSelectCenters   -> ChangeBackground(fNmColor);
+    fButtonRedrawPlot      -> ChangeBackground(fNmColor);
+    fButtonReselectCenters -> ChangeBackground(fNmColor);
+    fButtonFitTotal        -> ChangeBackground(fNmColor);
+    fButtonMakeSummary     -> ChangeBackground(fNmColor);
+    fButtonHelp            -> ChangeBackground(fNmColor);
+    fButtonPrintBinning    -> ChangeBackground(fNmColor);
+    fButtonResetBinning    -> ChangeBackground(fNmColor);
+    fButtonSaveBinning     -> ChangeBackground(fNmColor);
+    fButtonSetBinWidthX    -> ChangeBackground(fNmColor);
+    fButtonSetBinWidthY    -> ChangeBackground(fNmColor);
+    fButtonSetSValue       -> ChangeBackground(fNmColor);
+    fButtonSetFitRange     -> ChangeBackground(fNmColor);
+    fButtonSetRunNumber    -> ChangeBackground(fNmColor);
+    fButtonSaveConfig      -> ChangeBackground(fNmColor);
 }
 
-void LKBeamPIDControl::OnChangeSigmaDist() {
-    Info("Change sigma dist → 숫자 입력 대기");
-    RequireInput(InputMode::ChangeSigmaDist);
-}
+void LKBeamPIDControl::PressedListFiles()         { ResetBB(); fButtonListFiles       -> ChangeBackground(fHLColor); ListFiles();       }
+void LKBeamPIDControl::PressedSetFileNumber()     { ResetBB(); fButtonSelectFile      -> ChangeBackground(fHLColor); RequireInput(InputMode::SetFileNumber); }
+void LKBeamPIDControl::PressedUseCurrentgPad()    { ResetBB(); fButtonUseCurrentgPad  -> ChangeBackground(fHLColor); UseCurrentgPad();  }
+void LKBeamPIDControl::PressedSelectCenters()     { ResetBB(); fButtonSelectCenters   -> ChangeBackground(fHLColor); SelectCenters();   }
+void LKBeamPIDControl::PressedRedraw()            { ResetBB(); fButtonRedrawPlot      -> ChangeBackground(fHLColor); Redraw();          }
+void LKBeamPIDControl::PressedReselectCenters()   { ResetBB(); fButtonReselectCenters -> ChangeBackground(fHLColor); ReselectCenters(); }
+void LKBeamPIDControl::PressedFitTotal()          { ResetBB(); fButtonFitTotal        -> ChangeBackground(fHLColor); FitTotal();        }
+void LKBeamPIDControl::PressedMakeSummary()       { ResetBB(); fButtonMakeSummary     -> ChangeBackground(fHLColor); MakeSummary();     }
+void LKBeamPIDControl::PressedHelp()              { ResetBB(); fButtonHelp            -> ChangeBackground(fHLColor); Help();            }
+void LKBeamPIDControl::PressedPrintBinning()      { ResetBB(); fButtonPrintBinning    -> ChangeBackground(fHLColor); PrintBinning();    }
+void LKBeamPIDControl::PressedResetBinning()      { ResetBB(); fButtonResetBinning    -> ChangeBackground(fHLColor); ResetBinning();    }
+void LKBeamPIDControl::PressedSaveBinning()       { ResetBB(); fButtonSaveBinning     -> ChangeBackground(fHLColor); SaveBinning();     }
+void LKBeamPIDControl::PressedSetXBinSize()       { ResetBB(); fButtonSetBinWidthX    -> ChangeBackground(fHLColor); RequireInput(InputMode::SetXBinSize); }
+void LKBeamPIDControl::PressedSetYBinSize()       { ResetBB(); fButtonSetBinWidthY    -> ChangeBackground(fHLColor); RequireInput(InputMode::SetYBinSize); }
+void LKBeamPIDControl::PressedSetSValue()         { ResetBB(); fButtonSetSValue       -> ChangeBackground(fHLColor); RequireInput(InputMode::SetSValue); }
+void LKBeamPIDControl::PressedSetFitRange()       { ResetBB(); fButtonSetFitRange     -> ChangeBackground(fHLColor); RequireInput(InputMode::SetFitRange); }
+void LKBeamPIDControl::PressedSetRunNumber()      { ResetBB(); fButtonSetRunNumber    -> ChangeBackground(fHLColor); RequireInput(InputMode::SetRunNumber); }
+void LKBeamPIDControl::PressedSaveConfiguration() { ResetBB(); fButtonSaveConfig      -> ChangeBackground(fHLColor); SaveConfiguration(); };
 
-void LKBeamPIDControl::OnEnter() {
-    if (!fBtnEnter->IsEnabled()) return;
-    double val = fNumEntry->GetNumber();
+void LKBeamPIDControl::RequireInput(InputMode mode)
+{
+    fInputMode = mode;
+    fButtonEnter->SetEnabled(kTRUE);
+    fNumEntry->GetNumberEntry()->SetFocus();
     switch (fInputMode) {
-        case InputMode::SelectFile:
-            Info(Form("Select file index: %.3f", val));
+        case InputMode::SetFileNumber:
+            lk_info << "Enter file number" << endl;
             break;
-        case InputMode::ChangeSigmaDist:
-            Info(Form("Sigma dist changed to %.3f", val));
+        case InputMode::SetSValue:
+            lk_info << "Enter X bin width" << endl;
+            break;
+        case InputMode::SetXBinSize:
+            lk_info << "Enter X bin width" << endl;
+            break;
+        case InputMode::SetYBinSize:
+            lk_info << "Enter S-value" << endl;
+            break;
+        case InputMode::SetFitRange:
+            lk_info << "Enter fit range in sigma" << endl;
+            break;
+        case InputMode::SetRunNumber:
+            lk_info << "Enter run number " << endl;
             break;
         default:
-            Info(Form("Enter pressed: %.3f", val));
+            break;
+    }
+}
+
+void LKBeamPIDControl::PressedEnter()
+{
+    if (!fButtonEnter->IsEnabled()) return;
+    double val = fNumEntry->GetNumber();
+    switch (fInputMode) {
+        case InputMode::SetFileNumber:
+            lk_info << "Select file index : " << val << endl;
+            SelectFile(int(val));
+            break;
+        case InputMode::SetSValue:
+            lk_info << "S value changed to " << val << endl;
+            SetSValue(val);
+            break;
+        case InputMode::SetXBinSize:
+            lk_info << "x-bin size changed to " << val << endl;
+            SetXBinSize(val);
+            break;
+        case InputMode::SetYBinSize:
+            lk_info << "y-bin size changed to " << val << endl;
+            SetYBinSize(val);
+            break;
+        case InputMode::SetFitRange:
+            lk_info << "Fit range changed to " << val << " (*sigma)" << endl;
+            SetGausFitRange(val);
+            break;
+        case InputMode::SetRunNumber:
+            lk_info << "Fit range changed to " << val << " (*sigma)" << endl;
+            SetRunNumber(int(val));
+            break;
+        default:
             break;
     }
     ClearInputMode();
 }
 
+void LKBeamPIDControl::PressedQuit()
+{
+    gApplication -> Terminate();
+}
+
+void LKBeamPIDControl::ClearInputMode() {
+    fInputMode = InputMode::None;
+    fButtonEnter->SetEnabled(kFALSE);
+}
