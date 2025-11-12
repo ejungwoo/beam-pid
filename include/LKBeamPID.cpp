@@ -20,66 +20,50 @@ LKBeamPID::LKBeamPID()
     fDraw2D = fGroupPID -> CreateDrawing(Form("draw_2d_%04d",fCurrentRunNumber));
     fDraw2D -> SetCanvasSize(1,1,1);
     fDraw2D -> SetCanvasMargin(.11,.15,.11,0.08);
-    if (fUseLogz) fDraw2D -> SetLogz();
+
+    InitParameters();
+}
+
+void LKBeamPID::InitParameters()
+{
+    fBnn0.SetNMM(800,-1025,-875,800,0,200);
+
+    LKParameterContainer par("config.mac");
+    par.UpdatePar(fFitRangeInSigma,    "fit_range");
+    par.UpdatePar(fXName,              "x_name");
+    par.UpdatePar(fYName,              "y_name");
+    par.UpdatePar(fNumContours,        "num_contours");
+    par.UpdatePar(fBnn0,               "binning");
+    par.UpdatePar(fFinalContourAScale, "cut_s_value");
+    par.UpdatePar(fDefaultPath,        "data_path");
+    par.UpdatePar(fDefaultFormat,      "file_format");
+    par.UpdatePar(fDefaultFitSigmaX,   "fit_sigma_x");
+    par.UpdatePar(fDefaultFitSigmaY,   "fit_sigma_y");
+    par.UpdatePar(fDefaultFitTheta,    "fit_theta");
+    par.UpdatePar(fAmpRatioRange,      "fit_amp_ratio_range");
+    par.UpdatePar(fPosRatioRangeInSig, "fit_pos_ratio_range");
+    par.UpdatePar(fSigmaRatioRange,    "fit_sigma_ratio_range");
+    par.UpdatePar(fThetaRange,         "fit_theta_range");
+    fContourScaleList = par.InitPar(fContourScaleList, "example_s_list");
+    par.Print();
+
+    if (fXName==".") fXName = "";
+    if (fYName==".") fYName = "";
+    fBnn1 = fBnn0;
 }
 
 void LKBeamPID::Help(TString mode)
 {
-    if (mode.Index("help")>=0) {
-        PrintBinning();
-        e_cout << "== List of main functions" << endl;
-        e_cout << "   - ListFiles(TString path, TString format)" << endl;
-        e_cout << "   - SelectFile(int idx)" << endl;
-        e_cout << "   - UseCurrentgPad()" << endl;
-        e_cout << "   - SelectCenters()" << endl;
-        e_cout << "   - Redraw()" << endl;
-        e_cout << "   - RelectCenters()" << endl;
-        e_cout << "   - FitTotal()" << endl;
-        e_cout << "   - MakeSummary()" << endl;
-        e_cout << endl;
-        e_cout << "== List of optional functions" << endl;
-        e_cout << "   - Help(TString mode)" << endl;
-        e_cout << "   - ResetBinning()" << endl;
-        e_cout << "   - SaveBinning()" << endl;
-        e_cout << "   - SetSValue(double scale)" << endl;
-        e_cout << "   - SetXBinSize(double w)" << endl;
-        e_cout << "   - SetYBinSize(double w)" << endl;
-        e_cout << "   - SetGausFitRange(double sigDist)" << endl;
-        e_cout << "   - SetRunNumber(int run)" << endl;
-        e_cout << "   - SaveConfiguration()" << endl;
-    }
-
-    //if (mode.Index("i")>=0) {
-    //    e_note << "List of binning methods:" << endl;
-    //      e_cout << "   SetRangeX(x1, x2)" << endl;
-    //      e_cout << "   SetRangeY(y1, y2)" << endl;
-    //      e_cout << "   SetBinningX(nx, x1, x2)" << endl;
-    //      e_cout << "   SetBinningY(ny, y1, y2)" << endl;
-    //      e_cout << "   SetBinning(x1, x2, y1, y2)" << endl;
-    //      e_cout << "   SetBinning(nx, x1, x2, ny, y1, y2)" << endl;
-    //      e_cout << "   SetBinWX(w)" << endl;
-    //      e_cout << "   SetBinWY(w)" << endl;
-    //      e_cout << "   SetBinNX(n)" << endl;
-    //      e_cout << "   SetBinNY(n)" << endl;
-    //      e_cout << "   SaveBinning()" << endl;
-    //}
-    //else                    e_info << "Enter 'ii' to print list of methods for binning setting" << endl;
-    //                        e_info << "Enter 'bb' to reset binning configuration" << endl;
-    //                        e_info << "Enter 'vv' to save current binning configuration" << endl;
-    //                        e_info << "Enter 'ee' to change the final contour amplitude scale (" << fFinalContourAScale << ")" << endl;
-    //if (mode.Index("a")>=0) e_note << "Enter 'aa' to print list of files" << endl;
-    //if (mode.Index("s")>=0) e_note << "Enter 'ss' to select files" << endl;
-    //if (mode.Index("d")>=0) e_note << "Enter 'dd' to draw and select PID centers" << endl;
-    //if (mode.Index("t")>=0) e_note << "Enter 'tt' to redraw" << endl;
-    //if (mode.Index("r")>=0) e_note << "Enter 'rr' to redraw and select PID centers" << endl;
-    //if (mode.Index("f")>=0) e_note << "Enter 'ff' to fit histogram simultaneously using previous fits" << endl;
-    //if (mode.Index("g")>=0) e_note << "Enter 'gg' to make summary of the result" << endl;
-    //if (mode.Index("q")>=0) e_info << "Enter 'qq' to change fit range" << endl;
+    //
 }
 
 bool LKBeamPID::ListFiles(TString path, TString format)
 {
     e_title << "ListFiles" << endl;
+
+    if (path.IsNull()) path = fDefaultPath;
+    if (format.IsNull()) format = fDefaultFormat;
+
     if (!fRunCollected) {
         CollectRootFiles(fListGenFile,path,format);
         fRunCollected = true;
@@ -129,7 +113,7 @@ bool LKBeamPID::SelectFile(int index)
         fCurrentFileName = fListGenFile.at(index);
         TString runNumberString = TString(fCurrentFileName(fCurrentFileName.Index("chkf")+8,4));
         if (runNumberString.IsDigit()) fCurrentRunNumber = runNumberString.Atoi();
-        else fCurrentRunNumber=999999999;
+        else fCurrentRunNumber = 999999999;
         fListGenFile.erase(fListGenFile.begin()+index);
         e_cout << "   " << fCurrentFileName << endl;
         e_cout << "   (this file will be removed from the list)" << endl;
@@ -139,9 +123,12 @@ bool LKBeamPID::SelectFile(int index)
     if (fDataFile) fDataFile -> Close();
     fDataFile = new TFile(fCurrentFileName,"read");
     fDataTree = (TTree*) fDataFile -> Get("tree");
-    if      (fCurrentFileName.Index("chkf2run")>=0) { fCurrentType = 2; fYName = "f2ssde"; }
-    else if (fCurrentFileName.Index("chkf3run")>=0) { fCurrentType = 3; fYName = "f3ssde"; }
-    fXName = "rf0";
+    if (fYName.IsNull()) {
+        if      (fCurrentFileName.Index("chkf2run")>=0) { fCurrentType = 2; fYName = "f2ssde"; }
+        else if (fCurrentFileName.Index("chkf3run")>=0) { fCurrentType = 3; fYName = "f3ssde"; }
+    }
+    if (fXName.IsNull())
+        fXName = "rf0";
 
     if (!fInitialized)
     {
@@ -163,11 +150,10 @@ bool LKBeamPID::SelectFile(int index)
 void LKBeamPID::CreateAndFillHistogram(int printb)
 {
     if (printb) {
-        e_cout << "   " << fBnn2.Print(false) << endl;
-        e_cout << "   " << fBnn3.Print(false) << endl;
+        PrintBinning();
     }
     if (fDataTree) {
-        fHistPID = fBnn2.NewH2(Form("histPID_%04d",fCurrentRunNumber),Form(";%s;%s",fXName.Data(),fYName.Data()));
+        fHistPID = fBnn1.NewH2(Form("histPID_%04d",fCurrentRunNumber),Form(";%s;%s",fXName.Data(),fYName.Data()));
         Long64_t entriesTotal = fDataTree->Draw(Form("%s:%s>>%s",fYName.Data(),fXName.Data(),fHistPID->GetName()),"","goff");
         e_info << "Total entries =" << entriesTotal << " (hist)=" << fHistPID -> GetEntries() << endl;
         fHistPID -> GetXaxis() -> SetTitleOffset(1.2);
@@ -256,7 +242,7 @@ void LKBeamPID::SelectCenters(vector<vector<double>> points)
         auto fit = Fit2DGaussian(fHistPID, count, point[0], point[1]);
         auto idx = fFitArray -> GetEntries();
         fFitArray -> Add(fit);
-        if (fUse2D) {
+        {
             double xx1, xx2, yy1, yy2;
             fit -> GetParLimits(1,xx1,xx2);
             fit -> GetParLimits(3,yy1,yy2);
@@ -283,7 +269,6 @@ void LKBeamPID::SelectCenters(vector<vector<double>> points)
             fDraw2D -> Add(graphCenterRange,"samel");
             fDraw2D -> Add(graphFitRange,"samel");
         }
-        if (fUse2D)
         {
             auto amplit = fit->GetParameter(0);
             auto valueX = fit->GetParameter(1);
@@ -305,8 +290,6 @@ void LKBeamPID::SelectCenters(vector<vector<double>> points)
         }
         count++;
     }
-    //fDraw2D -> Print("all");
-    //fDraw2D -> Draw("debug_draw");
     fGroupFit -> Draw();
     fDraw2D -> Draw();
 
@@ -351,10 +334,10 @@ void LKBeamPID::FitTotal()
         auto valueY = fit->GetParameter(3);
         auto sigmaY = fit->GetParameter(4);
         auto thetaR = fit->GetParameter(5);
-        auto x1 = valueX-fSigDist*sigmaX; if (xx1>x1) xx1 = x1;
-        auto x2 = valueX+fSigDist*sigmaX; if (xx2<x2) xx2 = x2;
-        auto y1 = valueY-fSigDist*sigmaY; if (yy1>y1) yy1 = y1;
-        auto y2 = valueY+fSigDist*sigmaY; if (yy2<y2) yy2 = y2;
+        auto x1 = valueX-fFitRangeInSigma*sigmaX; if (xx1>x1) xx1 = x1;
+        auto x2 = valueX+fFitRangeInSigma*sigmaX; if (xx2<x2) xx2 = x2;
+        auto y1 = valueY-fFitRangeInSigma*sigmaY; if (yy1>y1) yy1 = y1;
+        auto y2 = valueY+fFitRangeInSigma*sigmaY; if (yy2<y2) yy2 = y2;
     }
     auto fitContanminent = new TF2(Form("fitContanminent_%04d", fCurrentRunNumber), formulaTotal, xx1, xx2, yy1, yy2);
     auto fitTotal = new TF2(Form("fitTotal_%04d", fCurrentRunNumber), formulaTotal, xx1, xx2, yy1, yy2);
@@ -375,12 +358,12 @@ void LKBeamPID::FitTotal()
         fitTotal -> SetParameter(3+iFit*6, sigmaX);
         fitTotal -> SetParameter(4+iFit*6, sigmaY);
         fitTotal -> SetParameter(5+iFit*6, thetaR);
-        fitTotal -> SetParLimits(0+iFit*6, amplit*0.8, amplit*1.2);
-        fitTotal -> SetParLimits(1+iFit*6, valueX-0.1*sigmaX, valueX+0.1*sigmaX);
-        fitTotal -> SetParLimits(2+iFit*6, valueY-0.1*sigmaY, valueY+0.1*sigmaY);
-        fitTotal -> SetParLimits(3+iFit*6, sigmaX*0.8, sigmaX*1.2);
-        fitTotal -> SetParLimits(4+iFit*6, sigmaY*0.8, sigmaY*1.2);
-        fitTotal -> SetParLimits(5+iFit*6, thetaR-0.1*TMath::Pi(), thetaR+0.1*TMath::Pi());
+        fitTotal -> SetParLimits(0+iFit*6, amplit*(1.-fAmpRatioRange), amplit*(1.+fAmpRatioRange));
+        fitTotal -> SetParLimits(1+iFit*6, valueX-fPosRatioRangeInSig*sigmaX, valueX+fPosRatioRangeInSig*sigmaX);
+        fitTotal -> SetParLimits(2+iFit*6, valueY-fPosRatioRangeInSig*sigmaY, valueY+fPosRatioRangeInSig*sigmaY);
+        fitTotal -> SetParLimits(3+iFit*6, sigmaX*(1.-fSigmaRatioRange), sigmaX*(1.+fSigmaRatioRange));
+        fitTotal -> SetParLimits(4+iFit*6, sigmaY*(1.-fSigmaRatioRange), sigmaY*(1.+fSigmaRatioRange));
+        fitTotal -> SetParLimits(5+iFit*6, thetaR-fThetaRange, thetaR+fThetaRange);
     }
     e_info << "Fitting " << numFits << " PIDs in " << Form("x=(%f,%f), y=(%f,%f) ...",xx1,xx2,yy1,yy2) << endl;
     fHistPID -> Fit(fitTotal,"QBR0");
@@ -438,7 +421,7 @@ void LKBeamPID::FitTotal()
         //fDraw2D -> AddLegendLine(Form("%d) cc=%d",iFit,int(corrected)));
         legend -> AddEntry((TObject*)nullptr,Form("[%d] %d (%d)",iFit,int(count),int(contamination)),"");
     }
-    if (fUse2D) {
+    {
         auto graphFitRange = new TGraph();
         graphFitRange -> SetLineColor(kYellow);
         graphFitRange -> SetLineStyle(2);
@@ -625,7 +608,6 @@ LKDrawing* LKBeamPID::GetFitTestDrawing(int idx, TH2D *hist, TF2* fit, TF2* fitC
     double wy = hist -> GetYaxis() -> GetBinWidth(1);
     double binA = wx*wy;
     double dc = (1./fNumContours);
-    //double countFullG = Integral2DGaussian(fit, 0) / binA;
     double countFullG = 1;
     for (double contourScale=0; contourScale<1; contourScale+=dc) {
         auto graphC = GetContourGraph(contourScale*amplit, amplit, valueX, sigmaX, valueY, sigmaY, thetaR);
@@ -653,7 +635,10 @@ LKDrawing* LKBeamPID::GetFitTestDrawing(int idx, TH2D *hist, TF2* fit, TF2* fitC
 
 TF2* LKBeamPID::Fit2DGaussian(TH2D *hist, int idx, double valueX, double valueY, double sigmaX, double sigmaY, double theta)
 {
-    TF2 *fit = new TF2(Form("fit_%04d_%d", fCurrentRunNumber, idx), fFormulaRotated2DGaussian, valueX-fSigDist*sigmaX,valueX+fSigDist*sigmaX, valueY-fSigDist*sigmaY,valueY+fSigDist*sigmaY);
+    if (sigmaX==0) sigmaX = fDefaultFitSigmaX;
+    if (sigmaY==0) sigmaY = fDefaultFitSigmaY;
+    if (theta==0) theta = fDefaultFitTheta;
+    TF2 *fit = new TF2(Form("fit_%04d_%d", fCurrentRunNumber, idx), fFormulaRotated2DGaussian, valueX-fFitRangeInSigma*sigmaX,valueX+fFitRangeInSigma*sigmaX, valueY-fFitRangeInSigma*sigmaY,valueY+fFitRangeInSigma*sigmaY);
     double amplit = hist -> GetBinContent(hist->GetXaxis()->FindBin(valueX),hist->GetYaxis()->FindBin(valueY));
     fit -> SetParameter(0, amplit);
     fit -> SetParameter(1, valueX);
@@ -752,8 +737,11 @@ double LKBeamPID::Integral2DGaussian(TF2 *f2, double contoA)
     return Integral2DGaussian(f2->GetParameter(0), f2->GetParameter(2), f2->GetParameter(4), contoA);
 }
 
-void LKBeamPID::CollectRootFiles(std::vector<TString> &listGenFile, const char *dataPath, const TString &format)
+void LKBeamPID::CollectRootFiles(std::vector<TString> &listGenFile, TString dataPath, TString format)
 {
+    if (dataPath.IsNull()) dataPath = fDefaultPath;
+    if (format.IsNull()) format = fDefaultFormat;
+
     e_info << "Looking for data files(" << format << ") in " << dataPath << endl;
     void *dirp = gSystem->OpenDirectory(dataPath);
     if (!dirp) {
@@ -792,8 +780,8 @@ void LKBeamPID::SetGausFitRange(double sigDist)
         inputString = inputString.Strip(TString::kBoth);
         sigDist = inputString.Atof();
     }
-    fSigDist = sigDist;
-    e_cout << "   " << fSigDist << endl;
+    fFitRangeInSigma = sigDist;
+    e_cout << "   " << fFitRangeInSigma << endl;
 }
 
 void LKBeamPID::SetSValue(double scale)
@@ -811,23 +799,44 @@ void LKBeamPID::SetSValue(double scale)
 
 void LKBeamPID::SaveConfiguration()
 {
+    TString sListString; for (auto s : fContourScaleList) sListString = sListString + LKMisc::RemoveTrailing0(s) + ", "; sListString.Remove(sListString.Sizeof()-2);
+    TString bnnString = Form("%d,%f,%f, %d,%f,%f",fBnn1.nx(), fBnn1.x1(), fBnn1.x2(), fBnn1.ny(), fBnn1.y1(), fBnn1.y2());
+    TString xName = fXName.IsNull()?".":fXName;
+    TString yName = fYName.IsNull()?".":fYName;
+    LKParameterContainer par;
+    par.AddPar("fit_range"             ,fFitRangeInSigma,    "fit range in unit of sigma");
+    par.AddPar("x_name"                ,xName,               "x value name in tree");
+    par.AddPar("y_name"                ,yName,               "y value name in tree");
+    par.AddPar("num_contours"          ,fNumContours,        "number of contours for integral test");
+    par.AddPar("binning"               ,bnnString,           "default x(3),y(3) binning for pid plot");
+    par.AddPar("cut_s_value"           ,fFinalContourAScale, "s-value (ratio compared to the gaussian amplitude) for drawing pid cut contour");
+    par.AddPar("example_s_list"        ,sListString,         "list of s-value for contours in the pid pid. cut_s_value is automatically added to the list.");
+    par.AddPar("data_path"             ,fDefaultPath,        "path to look for the files");
+    par.AddPar("file_format"           ,fDefaultFormat,      "function will search files which end with file_format");
+    par.AddPar("fit_sigma_x"           ,fDefaultFitSigmaX,   "default initial sigma_x value");
+    par.AddPar("fit_sigma_y"           ,fDefaultFitSigmaY,   "default initial sigma_y value");
+    par.AddPar("fit_theta"             ,fDefaultFitTheta,    "default initial theta value");
+    par.AddPar("fit_amp_ratio_range"   ,fAmpRatioRange,      "amplitude (+-) range in ratio");
+    par.AddPar("fit_pos_ratio_range"   ,fPosRatioRangeInSig, "position (+-) range in ratio");
+    par.AddPar("fit_sigma_ratio_range" ,fSigmaRatioRange,    "sigma (+-) range in ratio");
+    par.AddPar("fit_theta_range"       ,fThetaRange,         "theta (+-) range");
+    par.SaveAs("config.mac");
 }
 
-void LKBeamPID::PrintBinning() { fBnn2.Print(); fBnn3.Print(); }
-void LKBeamPID::ResetBinning() { fBnn2.SetNMM(800,-1025,-875,800,0,200); fBnn3.SetNMM(800,-1025,-875,800,0,200); CreateAndFillHistogram(1); }
-void LKBeamPID::SetBinningX(int nx, double x1, double x2, int fill) { fBnn2.SetXNMM(nx,x1,x2); fBnn3.SetXNMM(nx,x1,x2); if (fill) CreateAndFillHistogram(1); }
-void LKBeamPID::SetBinningY(int ny, double y1, double y2, int fill) { fBnn2.SetYNMM(ny,y1,y2); fBnn3.SetYNMM(ny,y1,y2); if (fill) CreateAndFillHistogram(1); }
-void LKBeamPID::SetRangeX(double x1, double x2, int fill) { fBnn2.SetXMM(x1,x2); fBnn3.SetXMM(x1,x2); if (fill) CreateAndFillHistogram(1); }
-void LKBeamPID::SetRangeY(double y1, double y2, int fill) { fBnn2.SetYMM(y1,y2); fBnn3.SetYMM(y1,y2); if (fill) CreateAndFillHistogram(1); }
+void LKBeamPID::PrintBinning() { e_cout << "== Current binning: " << fBnn1.Print(false) << endl; }
+void LKBeamPID::ResetBinning() { fBnn1 = fBnn0; CreateAndFillHistogram(1); }
+void LKBeamPID::SetBinningX(int nx, double x1, double x2, int fill) { fBnn1.SetXNMM(nx,x1,x2); if (fill) CreateAndFillHistogram(1); }
+void LKBeamPID::SetBinningY(int ny, double y1, double y2, int fill) { fBnn1.SetYNMM(ny,y1,y2); if (fill) CreateAndFillHistogram(1); }
+void LKBeamPID::SetRangeX(double x1, double x2, int fill) { fBnn1.SetXMM(x1,x2); if (fill) CreateAndFillHistogram(1); }
+void LKBeamPID::SetRangeY(double y1, double y2, int fill) { fBnn1.SetYMM(y1,y2); if (fill) CreateAndFillHistogram(1); }
 void LKBeamPID::SetBinning(int nx, double x1, double x2, int ny, double y1, double y2) { SetBinningX(nx,x1,x2,0); SetBinningY(ny,y1,y2,0); CreateAndFillHistogram(1); }
 void LKBeamPID::SetBinning(double x1, double x2, double y1, double y2) { SetRangeX(x1,x2,0); SetRangeY(y1,y2,0); CreateAndFillHistogram(1); }
-void LKBeamPID::SetXBinSize(double w, int fill) { fBnn2.SetWX(w); fBnn3.SetWX(w); if (fill) CreateAndFillHistogram(1); }
-void LKBeamPID::SetYBinSize(double w, int fill) { fBnn2.SetWY(w); fBnn3.SetWY(w); if (fill) CreateAndFillHistogram(1); }
-void LKBeamPID::SetBinNX(double n, int fill) { fBnn2.SetNX(n); fBnn3.SetNX(n); if (fill) CreateAndFillHistogram(1); }
-void LKBeamPID::SetBinNY(double n, int fill) { fBnn2.SetNY(n); fBnn3.SetNY(n); if (fill) CreateAndFillHistogram(1); }
+void LKBeamPID::SetXBinSize(double w, int fill) { fBnn1.SetWX(w); if (fill) CreateAndFillHistogram(1); }
+void LKBeamPID::SetYBinSize(double w, int fill) { fBnn1.SetWY(w); if (fill) CreateAndFillHistogram(1); }
+void LKBeamPID::SetBinNX(double n, int fill) { fBnn1.SetNX(n); if (fill) CreateAndFillHistogram(1); }
+void LKBeamPID::SetBinNY(double n, int fill) { fBnn1.SetNY(n); if (fill) CreateAndFillHistogram(1); }
 void LKBeamPID::SaveBinning() {
     if (!fHistPID) return;
-    fBnn2.SetBinning(fHistPID,true);
-    fBnn3.SetBinning(fHistPID,true);
+    fBnn1.SetBinning(fHistPID,true);
     CreateAndFillHistogram(1);
 }

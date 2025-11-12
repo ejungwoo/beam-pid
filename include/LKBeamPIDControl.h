@@ -34,7 +34,6 @@ class LKBeamPIDControl : public TGMainFrame, public LKBeamPID
         void PressedSetFileNumber();
         void PressedUseCurrentgPad();
         void PressedSelectCenters();
-        void PressedRedraw();
         void PressedReselectCenters();
         void PressedFitTotal();
         void PressedMakeSummary();
@@ -59,6 +58,7 @@ class LKBeamPIDControl : public TGMainFrame, public LKBeamPID
         void BtNx(TGTextButton* b);
         void RequireInput(InputMode mode);
         void ClearInputMode();
+        void Help2();
 
         InputMode fInputMode;
 
@@ -69,7 +69,6 @@ class LKBeamPIDControl : public TGMainFrame, public LKBeamPID
         TGTextButton *fBtnSelectFile      = nullptr;
         TGTextButton *fBtnUseCurrentgPad  = nullptr;
         TGTextButton *fBtnSelectCenters   = nullptr;
-        TGTextButton *fBtnRedrawPlot      = nullptr;
         TGTextButton *fBtnReselectCenters = nullptr;
         TGTextButton *fBtnFitTotal        = nullptr;
         TGTextButton *fBtnMakeSummary     = nullptr;

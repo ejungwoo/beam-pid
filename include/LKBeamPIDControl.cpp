@@ -67,26 +67,25 @@ LKBeamPIDControl::LKBeamPIDControl(UInt_t w, UInt_t h)
     fBtnSelectFile      = mkBtn(col1, "&2 Select file",    "PressedSetFileNumber()");
     fBtnUseCurrentgPad  = mkBtn(col1, "&3 Use gPad",       "PressedUseCurrentgPad()");
     fBtnSelectCenters   = mkBtn(col1, "&4 Select centers", "PressedSelectCenters()");
-    //fBtnRedrawPlot      = mkBtn(col1, "Redraw &plot",      "PressedRedraw()");
     fBtnReselectCenters = mkBtn(col1, "&5 Resel. centers", "PressedReselectCenters()");
     fBtnFitTotal        = mkBtn(col1, "&6 Fit total",      "PressedFitTotal()");
     fBtnMakeSummary     = mkBtn(col1, "&7 Make summary",   "PressedMakeSummary()");
 
     fBtnHelp            = mkBtn(col2, "&Help",             "PressedHelp()");
-    fBtnSetSValue       = mkBtn(col2, "Set S &value",       "PressedSetSValue()");
-    fBtnSetFitRange     = mkBtn(col2, "Set &fit range",     "PressedSetFitRange()");
-    fBtnSetRunNumber    = mkBtn(col2, "Set &run number",    "PressedSetRunNumber()");
+    fBtnSetSValue       = mkBtn(col2, "Set S &value",      "PressedSetSValue()");
+    fBtnSetFitRange     = mkBtn(col2, "Set &fit range",    "PressedSetFitRange()");
+    fBtnSetRunNumber    = mkBtn(col2, "Set &run number",   "PressedSetRunNumber()");
     fBtnSaveConfig      = mkBtn(col2, "&Save config.",     "PressedSaveConfiguration()");
     fBtnQuit            = mkBtn(col2, "&Quit",             "PressedQuit()");
 
-    fBtnPrintBinning    = mkBtn(col3, "Print binning",     "PressedPrintBinning()");
-    fBtnResetBinning    = mkBtn(col3, "Reset binning",     "PressedResetBinning()");
-    fBtnSaveBinning     = mkBtn(col3, "Save binning",      "PressedSaveBinning()");
-    fBtnSetBinWidthX    = mkBtn(col3, "Set x-bin width",   "PressedSetXBinSize()");
-    fBtnSetBinWidthY    = mkBtn(col3, "Set y-bin width",   "PressedSetYBinSize()");
+    fBtnPrintBinning    = mkBtn(col3, "&Print binning",    "PressedPrintBinning()");
+    fBtnResetBinning    = mkBtn(col3, "R&eset binning",    "PressedResetBinning()");
+    fBtnSaveBinning     = mkBtn(col3, "S&ave binning",     "PressedSaveBinning()");
+    fBtnSetBinWidthX    = mkBtn(col3, "Set &x-bin width",  "PressedSetXBinSize()");
+    fBtnSetBinWidthY    = mkBtn(col3, "Set &y-bin width",  "PressedSetYBinSize()");
 
-    BtNx(fBtnListFiles      );
-    BtNx(fBtnUseCurrentgPad );
+    BtNx(fBtnListFiles);
+    BtNx(fBtnUseCurrentgPad);
 
     // Bottom
     //auto *botFrame = new TGHorizontalFrame(vMain);
@@ -109,7 +108,6 @@ void LKBeamPIDControl::ResetBB(int col1, int col2, int col3)
         fBtnSelectFile      -> ChangeBackground(fNmColor);
         fBtnUseCurrentgPad  -> ChangeBackground(fNmColor);
         fBtnSelectCenters   -> ChangeBackground(fNmColor);
-        //fBtnRedrawPlot      -> ChangeBackground(fNmColor);
         fBtnReselectCenters -> ChangeBackground(fNmColor);
         fBtnFitTotal        -> ChangeBackground(fNmColor);
         fBtnMakeSummary     -> ChangeBackground(fNmColor);
@@ -140,12 +138,11 @@ void LKBeamPIDControl::PressedListFiles()         { ResetBB(1,1,1); BtHL(fBtnLis
 void LKBeamPIDControl::PressedSetFileNumber()     { ResetBB(1,1,1); BtHL(fBtnSelectFile     ); BtNx(fBtnSelectCenters); RequireInput(InputMode::SetFileNumber); }
 void LKBeamPIDControl::PressedUseCurrentgPad()    { ResetBB(1,1,1); BtHL(fBtnUseCurrentgPad ); BtNx(fBtnSelectCenters); UseCurrentgPad();  }
 void LKBeamPIDControl::PressedSelectCenters()     { ResetBB(1,1,1); BtHL(fBtnSelectCenters  ); BtNx(fBtnFitTotal     ); SelectCenters();   }
-void LKBeamPIDControl::PressedRedraw()            { ResetBB(1,1,1); BtHL(fBtnRedrawPlot     ); BtNx(fBtnFitTotal     ); Redraw();          }
 void LKBeamPIDControl::PressedReselectCenters()   { ResetBB(1,1,1); BtHL(fBtnReselectCenters); BtNx(fBtnFitTotal     ); ReselectCenters(); }
 void LKBeamPIDControl::PressedFitTotal()          { ResetBB(1,1,1); BtHL(fBtnFitTotal       ); BtNx(fBtnMakeSummary  ); FitTotal();        }
 void LKBeamPIDControl::PressedMakeSummary()       { ResetBB(1,1,1); BtHL(fBtnMakeSummary    ); BtNx(fBtnListFiles    ); MakeSummary();     }
 
-void LKBeamPIDControl::PressedHelp()              { ResetBB(0,1,1); BtHL(fBtnHelp           ); Help(); }
+void LKBeamPIDControl::PressedHelp()              { ResetBB(0,1,1); BtHL(fBtnHelp           ); Help2(); }
 void LKBeamPIDControl::PressedSetSValue()         { ResetBB(0,1,1); BtHL(fBtnSetSValue      ); RequireInput(InputMode::SetSValue); }
 void LKBeamPIDControl::PressedSetFitRange()       { ResetBB(0,1,1); BtHL(fBtnSetFitRange    ); RequireInput(InputMode::SetFitRange); }
 void LKBeamPIDControl::PressedSetRunNumber()      { ResetBB(0,1,1); BtHL(fBtnSetRunNumber   ); RequireInput(InputMode::SetRunNumber); }
@@ -156,6 +153,31 @@ void LKBeamPIDControl::PressedResetBinning()      { ResetBB(0,1,1); BtHL(fBtnRes
 void LKBeamPIDControl::PressedSaveBinning()       { ResetBB(0,1,1); BtHL(fBtnSaveBinning    ); SaveBinning(); }
 void LKBeamPIDControl::PressedSetXBinSize()       { ResetBB(0,1,1); BtHL(fBtnSetBinWidthX   ); RequireInput(InputMode::SetXBinSize); }
 void LKBeamPIDControl::PressedSetYBinSize()       { ResetBB(0,1,1); BtHL(fBtnSetBinWidthY   ); RequireInput(InputMode::SetYBinSize); }
+
+void LKBeamPIDControl::Help2()
+{
+    e_info << "== List of functions" << endl;
+    e_cout << "   " << "1 List files    " << ": Print list of files with index." << endl;
+    e_cout << "   " << "2 Select file   " << ": Select file using number entry." << endl;
+    e_cout << "   " << "3 Use gPad      " << ": Use existing gPad and drawing in it, instead of drawing from the file." << endl;
+    e_cout << "   " << "4 Select centers" << ": Select centers of PID candidates using the mouse pointer and fit individually." << endl;
+    e_cout << "   " << "5 Resel. centers" << ": Reselect PID candidates." << endl;
+    e_cout << "   " << "6 Fit total     " << ": Fit candiates simultaneously." << endl;
+    e_cout << "   " << "7 Make summary  " << ": Make summary outputs in 'summary/'" << endl;
+    e_cout << "---" << endl;
+    e_cout << "   " << "Help            " << "" << endl;
+    e_cout << "   " << "Set S value     " << "" << endl;
+    e_cout << "   " << "Set fit range   " << "" << endl;
+    e_cout << "   " << "Set run number  " << "" << endl;
+    e_cout << "   " << "Save config.    " << "Save current configuration in 'config.txt' which is loaded in the beginning of the execution." << endl;
+    e_cout << "   " << "Quit            " << "" << endl;
+    e_cout << "---" << endl;
+    e_cout << "   " << "Print binning   " << "" << endl;
+    e_cout << "   " << "Reset binning   " << "" << endl;
+    e_cout << "   " << "Save binning    " << "" << endl;
+    e_cout << "   " << "Set x-bin width " << "" << endl;
+    e_cout << "   " << "Set y-bin width " << "" << endl;
+}
 
 void LKBeamPIDControl::RequireInput(InputMode mode)
 {

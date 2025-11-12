@@ -32,7 +32,9 @@ class LKBeamPID
         LKBeamPID();
         LKBeamPID(TVirtualPad *pad): LKBeamPID() { UsePad(pad); }
 
-        bool ListFiles(TString path="./", TString format="gen.root");
+        void InitParameters();
+
+        bool ListFiles(TString path="", TString format="");
         bool SelectFile(int idx=-1);
         void CreateAndFillHistogram(int printb=1);
         void UseCurrentgPad() { UsePad(gPad); }
@@ -44,13 +46,13 @@ class LKBeamPID
         void MakeSummary();
 
         LKDrawing* GetFitTestDrawing(int i, TH2D *hist, TF2* fit, TF2* fitContanminent=(TF2*)nullptr);
-        TF2* Fit2DGaussian(TH2D *hist, int idx, double valueX, double valueY, double sigmaX=2.5, double sigmaY=1.5, double theta=21);
+        TF2* Fit2DGaussian(TH2D *hist, int idx, double valueX, double valueY, double sigmaX=0, double sigmaY=0, double theta=0);
         TGraph *GetContourGraph(double contoA, double amplit, double valueX, double sigmaX, double valueY, double sigmaY, double thetaR);
         double IntegralInsideGraph(TH2D* hist, TGraph* graph, bool justCount=true);
         double IntegralInsideGraph(TH2D* hist, TGraph* graph, TF2 *f2, bool justCount=true);
         double Integral2DGaussian(double amplitude, double sigma_x, double sigma_y, double contoA=0);
         double Integral2DGaussian(TF2 *f2, double contoA=0);
-        void CollectRootFiles(std::vector<TString> &listGenFile, const char *dataPath="data", const TString &format="gen.root");
+        void CollectRootFiles(std::vector<TString> &listGenFile, TString dataPath="", TString format="");
 
         void Help(TString mode="help");
         void PrintBinning();
@@ -74,8 +76,6 @@ class LKBeamPID
 
     private:
         int fStage = 0;
-        bool fUse2D = true;
-        bool fUseLogz = false;
         LKDrawingGroup *fTop = nullptr, *fGroupFit = nullptr, *fGroupPID = nullptr;
         LKDrawing *fDraw2D = nullptr;
         TObjArray *fHistDataArray = nullptr, *fHistFitGArray = nullptr, *fHistBackArray = nullptr, *fHistTestArray = nullptr, *fHistErrrArray = nullptr;
@@ -87,15 +87,25 @@ class LKBeamPID
         TH2D *fHistPID = nullptr;
         bool fRunCollected = false, fInitialized = false;
         int fCurrentRunNumber=999999999, fCurrentType = 1;
-        double fSigDist = 1;
-        int fNumContours = 10;
-        LKBinning fBnn2, fBnn3;
-        TString fCurrentFileName;
-        double fFinalContourAScale = 0.2;
         TGraph* fFinalContourGraph = nullptr;
-        vector<double> fContourScaleList = {0.9,0.5};
         const TString fFormulaRotated2DGaussian = "[0]*exp(-0.5*(pow(((x-[1])*cos([5])+(y-[3])*sin([5]))/[2],2)+pow((-(x-[1])*sin([5])+(y-[3])*cos([5]))/[4],2)))";
+        TString fCurrentFileName;
+
+        LKBinning fBnn1, fBnn0;
         TString fXName, fYName;
+        TString fDefaultPath = "./";
+        TString fDefaultFormat = "gen.root";
+        double fDefaultFitSigmaX = 2.5;
+        double fDefaultFitSigmaY = 1.5;
+        double fDefaultFitTheta = 21;
+        double fAmpRatioRange = 0.2;
+        double fPosRatioRangeInSig = 0.1;
+        double fSigmaRatioRange = 0.2;
+        double fThetaRange = 0.1*TMath::Pi();
+        double fFitRangeInSigma = 1;
+        int fNumContours = 10;
+        double fFinalContourAScale = 0.2;
+        vector<double> fContourScaleList = {0.9,0.5};
 
     ClassDef(LKBeamPID, 1)
 };
