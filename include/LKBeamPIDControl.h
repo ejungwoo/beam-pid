@@ -28,9 +28,7 @@ class LKBeamPIDControl : public TGMainFrame, public LKBeamPID
             SetRunNumber,
         };
 
-        LKBeamPIDControl(UInt_t w=900, UInt_t h=700);
-
-        void ResetBB();
+        LKBeamPIDControl(UInt_t w=0, UInt_t h=0);
 
         void PressedListFiles();
         void PressedSetFileNumber();
@@ -56,35 +54,39 @@ class LKBeamPIDControl : public TGMainFrame, public LKBeamPID
         void PressedQuit();
 
     private:
+        void ResetBB(int col1=1, int col2=1, int col3=1);
+        void BtHL(TGTextButton* b);
+        void BtNx(TGTextButton* b);
         void RequireInput(InputMode mode);
         void ClearInputMode();
 
-        // UI elements
-        TGNumberEntry *fNumEntry = nullptr;
-        TGTextButton  *fButtonEnter = nullptr;
-
-        TGTextButton *fButtonListFiles       = nullptr;
-        TGTextButton *fButtonSelectFile      = nullptr;
-        TGTextButton *fButtonUseCurrentgPad  = nullptr;
-        TGTextButton *fButtonSelectCenters   = nullptr;
-        TGTextButton *fButtonRedrawPlot      = nullptr;
-        TGTextButton *fButtonReselectCenters = nullptr;
-        TGTextButton *fButtonFitTotal        = nullptr;
-        TGTextButton *fButtonMakeSummary     = nullptr;
-        TGTextButton *fButtonHelp            = nullptr;
-        TGTextButton *fButtonPrintBinning    = nullptr;
-        TGTextButton *fButtonResetBinning    = nullptr;
-        TGTextButton *fButtonSaveBinning     = nullptr;
-        TGTextButton *fButtonSetBinWidthX    = nullptr;
-        TGTextButton *fButtonSetBinWidthY    = nullptr;
-        TGTextButton *fButtonSetSValue       = nullptr;
-        TGTextButton *fButtonSetFitRange     = nullptr;
-        TGTextButton *fButtonSetRunNumber    = nullptr;
-        TGTextButton *fButtonSaveConfig      = nullptr;
-
         InputMode fInputMode;
 
+        TGNumberEntry *fNumEntry = nullptr;
+        TGTextButton  *fBtnEnter = nullptr;
+
+        TGTextButton *fBtnListFiles       = nullptr;
+        TGTextButton *fBtnSelectFile      = nullptr;
+        TGTextButton *fBtnUseCurrentgPad  = nullptr;
+        TGTextButton *fBtnSelectCenters   = nullptr;
+        TGTextButton *fBtnRedrawPlot      = nullptr;
+        TGTextButton *fBtnReselectCenters = nullptr;
+        TGTextButton *fBtnFitTotal        = nullptr;
+        TGTextButton *fBtnMakeSummary     = nullptr;
+        TGTextButton *fBtnHelp            = nullptr;
+        TGTextButton *fBtnPrintBinning    = nullptr;
+        TGTextButton *fBtnResetBinning    = nullptr;
+        TGTextButton *fBtnSaveBinning     = nullptr;
+        TGTextButton *fBtnSetBinWidthX    = nullptr;
+        TGTextButton *fBtnSetBinWidthY    = nullptr;
+        TGTextButton *fBtnSetSValue       = nullptr;
+        TGTextButton *fBtnSetFitRange     = nullptr;
+        TGTextButton *fBtnSetRunNumber    = nullptr;
+        TGTextButton *fBtnSaveConfig      = nullptr;
+        TGTextButton *fBtnQuit            = nullptr;
+
         int fHLColor = 0;
+        int fNxColor = 0;
         int fNmColor = 0;
 
     ClassDef(LKBeamPIDControl, 1)
